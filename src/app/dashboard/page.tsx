@@ -150,6 +150,9 @@ const DashboardPage = () => {
                           <button>Edit</button>
                         </Link>
 
+                        <Link href={`/payment-plan/${debt.id}`}>
+                          <button>PaymentPlan</button>
+                        </Link>
                         <button onClick={() => deleteDebt(debt.id)}>
                           Delete
                         </button>
