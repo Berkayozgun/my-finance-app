@@ -100,6 +100,13 @@ const DashboardPage = () => {
   return (
     <div className='p-4'>
       <h1 className='text-2xl font-bold mb-4'>Dashboard</h1>
+
+      <Link href='/add-debt'>
+        <button className='mb-4 flex bg-blue-500 text-white rounded-sm w-24 items-center justify-center'>
+          Borç Ekle
+        </button>
+      </Link>
+
       <div className='mb-4'>
         <h2 className='text-xl font-semibold'>Borçlar</h2>
         {debts.length > 0 ? (
