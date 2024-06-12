@@ -49,7 +49,8 @@ const EditPage = () => {
   }
 
   return (
-    <div>
+    <div className="flex gap-4 flex-col">
+      <div>
       <h2>Edit sayfası - ID: {id}</h2>
       <h3>Borç Detayları:</h3>
       <p>Borç Adı: {debtData.debtName}</p>
@@ -59,6 +60,7 @@ const EditPage = () => {
       <p>Taksit Miktarı: {debtData.installment}</p>
       <p>Açıklama: {debtData.description}</p>
       <h3>Ödeme Planı:</h3>
+      </div>
       <ul>
         {paymentPlan.map((payment) => (
           <li key={payment.id}>
