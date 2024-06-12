@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const DashboardPage = () => {
   const [debts, setDebts] = useState([]);
@@ -27,6 +28,30 @@ const DashboardPage = () => {
     return soonestPayments;
   };
 
+  const deleteDebt = async (id) => {
+    const token = localStorage.getItem("accessToken");
+
+    try {
+      const response = await axios.delete(
+        `https://study.logiper.com/finance/debt/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = response.data;
+
+      if (data.status === "success") {
+        setDebts(debts.filter((debt) => debt.id !== id));
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      console.error("Debt delete error:", error);
+      setError("Borç silinirken bir hata oluştu.");
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -82,25 +107,51 @@ const DashboardPage = () => {
             <div>
               <p>Toplam Borç: {calculateTotalDebt()} TL</p>
               <p>Ödenen Borç Tutarı: {calculatePaidDebt()}</p>
-              <p>Yaklaşan Ödemeler : 
+              <p>
+                Yaklaşan Ödemeler :
                 {soonestPayments().map((debt) => (
                   <span key={debt.id}>{debt.debtName}, </span>
                 ))}
               </p>
             </div>
-            <ul className='flex flex-col gap-4'>
-              {debts.map((debt) => (
-                <li className='flex border gap-4' key={debt.id}>
-                  <p>Borç ID: {debt.id}</p>
-                  <p>Borç Adı: {debt.debtName}</p>
-                  <p>Borç Tutarı: {debt.debtAmount} TL</p>
-                  <p>
-                    Ödeme Tarihi:{" "}
-                    {new Date(debt.paymentStart).toLocaleDateString()}
-                  </p>
-                </li>
-              ))}
-            </ul>
+            <table className='w-full border-collapse border border-gray-500'>
+              <thead>
+                <tr className='bg-gray-200'>
+                  <th className='border border-gray-500 p-2'>Borç ID</th>
+                  <th className='border border-gray-500 p-2'>Borç Adı</th>
+                  <th className='border border-gray-500 p-2'>Borç Tutarı</th>
+                  <th className='border border-gray-500 p-2'>Ödeme Tarihi</th>
+                  <th className='border border-gray-500 p-2'>İşlemler</th>
+                </tr>
+              </thead>
+              <tbody>
+                {debts.map((debt) => (
+                  <tr key={debt.id} className='bg-white'>
+                    <td className='border border-gray-500 p-2'>{debt.id}</td>
+                    <td className='border border-gray-500 p-2'>
+                      {debt.debtName}
+                    </td>
+                    <td className='border border-gray-500 p-2'>
+                      {debt.debtAmount} TL
+                    </td>
+                    <td className='border border-gray-500 p-2'>
+                      {new Date(debt.paymentStart).toLocaleDateString()}
+                    </td>
+                    <td className='border border-gray-500 p-2 gap-2'>
+                      <div className='flex gap-2'>
+                        <Link href={`/edit/${[debt.id]}`}>
+                          <button>Edit</button>
+                        </Link>
+
+                        <button onClick={() => deleteDebt(debt.id)}>
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </>
         ) : (
           <p>Borç bulunmamaktadır.</p>
