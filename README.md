@@ -23,8 +23,8 @@ Bu proje, kullanıcıların borçlarını yönetebilecekleri ve ödeme planları
 1. Projeyi klonlayın:
 
    ```sh
-   git clone https://github.com/kullaniciadi/proje-adi.git
-   cd proje-adi
+   git clone https://github.com/Berkayozgun/my-finance-app.git
+   cd my-finance-app
 
    ```
 
@@ -60,115 +60,30 @@ Bu proje, kullanıcıların borçlarını yönetebilecekleri ve ödeme planları
 
 ### Kullanılan Teknolojiler ve Sürümleri
 
-- React (17.x)
-- Next.js (10.x)
-- Tailwind CSS (2.x)
-- Axios (0.21.x)
+- React (^18)
+- Next.js (14.2.3)
+- Tailwind CSS (^3.4.1)
+- Axios (^1.7.2)
 
 ### Proje Yapısı
 
 ```
-proje-adi/
-├── components/
-│   ├── Button.tsx
-│   ├── Input.tsx
-│   └── Layout.tsx
-├── pages/
-│   ├── _app.tsx
-│   ├── index.tsx
-│   └── login.tsx
-├── public/
-│   ├── favicon.ico
-│   └── vercel.svg
-├── styles/
-│   ├── globals.css
-│   └── Home.module.css
+my-finance-app/
+├── src/
+│   ├── add-debt/
+│   ├── dashboard/
+│   ├── edit/
+│    ├── [id]/
+│   ├── login/
+│   ├── payment-plans/
+│    ├── [id]/
+│   ├── register/
+├── layout.tsx
+├── page.tsx
+├── globals.css
 ├── .env.example
 ├── .gitignore
 ├── next.config.js
 ├── package.json
-└── README.md
+├── README.md
 ```
-
-### API
-
-Register Endpoint
-
-- URL: `https://api.example.com`
-- Method: `POST`
-- Headers:
-  - `Content-Type: application/json`
-- Body:
-  ````
-  {
-  "name": "Kullanıcı Adı",
-  "email": "email@example.com",
-  "password": "sifre"
-  }
-    ```
-  ````
-- Response:
-  `    {
-  "status": "success",
-  "data": "accessToken"
-}
-   ```
-
-Borç Bilgileri Endpoint
-
-- URL: `https://api.example.com/debts`
-- Method: `GET`
-- Headers:
-  - `Content-Type: application/json`
-  - `Authorization: Bearer accessToken`
-- Response:
-  ```
-{
-  "status": "success",
-  "data": {
-    "id": "666ae1b572e94d8f8322e8a7",
-    "createdAt": "2024-06-13T12:10:29.406Z",
-    ...
-    "paymentPlan": [
-      {
-        "id": "666ae1b572e94d8f8322e8a8",
-        "createdAt": "2024-06-13T12:10:29.406Z",
-        ...
-        "isPaid": true,
-        "paymentDate": "2024-06-13T00:00:00.000Z",
-        "paymentAmount": 50
-      }
-    ]
-  }
-}
-
-Taksiti Ödemiş Olarak İşaretleme
-
-- URL: `https://study.logiper.com/finance/payment-plans/:paymentPlanId`
-- Method: `PUT`
-- Headers:
-  - `Content-Type: application/json`
-  - `Authorization: Bearer accessToken`
-- Body:
-  ```
-  {
-  "paymentDate": paymentDate,
-  "paymentAmount": paymentAmount,
-  "isPaid": true
-}
-
-- Response:
-  ```
-  {
-  "status": "success",
-  "data": {
-    "id": "666ae1b572e94d8f8322e8a8",
-    "createdAt": "2024-06-13T12:10:29.406Z",
-    ...
-    "isPaid": true,
-    "paymentDate": "2024-06-13T00:00:00.000Z",
-    "paymentAmount": 50
-  }
-}
-   ```
-
