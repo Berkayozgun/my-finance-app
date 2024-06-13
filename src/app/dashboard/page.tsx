@@ -10,49 +10,6 @@ const DashboardPage = () => {
   const [error, setError] = useState(null);
   const router = useRouter();
 
-  const calculateTotalDebt = () => {
-    return debts.reduce((total, debt) => total + debt.debtAmount, 0);
-  };
-
-  const calculatePaidDebt = () => {
-    return debts.reduce((total, debt) => total + debt.paidAmount, 0);
-  };
-
-  const soonestPayments = () => {
-    const today = new Date();
-    const soonestPayments = debts.filter((debt) => {
-      const paymentStart = new Date(debt.paymentStart);
-      return paymentStart >= today;
-    });
-
-    return soonestPayments;
-  };
-
-  const deleteDebt = async (id) => {
-    const token = localStorage.getItem("accessToken");
-
-    try {
-      const response = await axios.delete(
-        `https://study.logiper.com/finance/debt/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const data = response.data;
-
-      if (data.status === "success") {
-        setDebts(debts.filter((debt) => debt.id !== id));
-      } else {
-        throw new Error(data.message);
-      }
-    } catch (error) {
-      console.error("Debt delete error:", error);
-      setError("Borç silinirken bir hata oluştu.");
-    }
-  };
-
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
 
@@ -89,6 +46,49 @@ const DashboardPage = () => {
     fetchData();
   }, [router]);
 
+  const deleteDebt = async (id) => {
+    const token = localStorage.getItem("accessToken");
+
+    try {
+      const response = await axios.delete(
+        `https://study.logiper.com/finance/debt/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = response.data;
+
+      if (data.status === "success") {
+        setDebts((prevDebts) => prevDebts.filter((debt) => debt.id !== id));
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      console.error("Debt delete error:", error);
+      setError("Borç silinirken bir hata oluştu.");
+    }
+  };
+
+  const calculateTotalDebt = () => {
+    return debts.reduce((total, debt) => total + debt.debtAmount, 0);
+  };
+
+  const calculatePaidAmount = (paymentPlan) => {
+    if (!paymentPlan || !Array.isArray(paymentPlan)) return 0;
+
+    return paymentPlan.reduce(
+      (totalPaid, payment) => totalPaid + (payment.isPaid ? payment.paymentAmount : 0),
+      0
+    );
+  };
+
+  const soonestPayments = () => {
+    const today = new Date();
+    return debts.filter((debt) => new Date(debt.paymentStart) >= today);
+  };
+
   if (isLoading) {
     return <div>Yükleniyor...</div>;
   }
@@ -113,7 +113,7 @@ const DashboardPage = () => {
           <>
             <div>
               <p>Toplam Borç: {calculateTotalDebt()} TL</p>
-              <p>Ödenen Borç Tutarı: {calculatePaidDebt()}</p>
+              <p>Ödenen Borç Tutarı: {calculatePaidAmount()} TL</p>
               <p>
                 Yaklaşan Ödemeler :
                 {soonestPayments().map((debt) => (
@@ -127,6 +127,7 @@ const DashboardPage = () => {
                   <th className='border border-gray-500 p-2'>Borç ID</th>
                   <th className='border border-gray-500 p-2'>Borç Adı</th>
                   <th className='border border-gray-500 p-2'>Borç Tutarı</th>
+                  <th className='border border-gray-500 p-2'>Ödenmiş Miktar</th>
                   <th className='border border-gray-500 p-2'>Ödeme Tarihi</th>
                   <th className='border border-gray-500 p-2'>İşlemler</th>
                 </tr>
@@ -142,6 +143,9 @@ const DashboardPage = () => {
                       {debt.debtAmount} TL
                     </td>
                     <td className='border border-gray-500 p-2'>
+                      {calculatePaidAmount(debt.paymentPlan)} TL
+                    </td>
+                    <td className='border border-gray-500 p-2'>
                       {new Date(debt.paymentStart).toLocaleDateString()}
                     </td>
                     <td className='border border-gray-500 p-2 gap-2'>
@@ -150,7 +154,7 @@ const DashboardPage = () => {
                           <button>Edit</button>
                         </Link>
 
-                        <Link href={`/payment-plan/${debt.id}`}>
+                        <Link href={`/payment-plans/${debt.id}`}>
                           <button>PaymentPlan</button>
                         </Link>
                         <button onClick={() => deleteDebt(debt.id)}>
