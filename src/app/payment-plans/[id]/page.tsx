@@ -7,35 +7,66 @@ const PaymentPlanDetailPage = () => {
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [debt, setDebt] = useState(null);
   const [paymentPlan, setPaymentPlan] = useState([]);
   const [paymentAmount, setPaymentAmount] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
 
-    const fetchPaymentPlan = async () => {
+    const fetchDebt = async () => {
       try {
         const response = await axios.get(
-          `https://study.logiper.com/finance/payment-plans/${id}`,
+          `https://study.logiper.com/finance/debt/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
-        setPaymentPlan(response.data.data);
+        const data = response.data.data;
+        setDebt(data);
+        const installments = createInstallments(data);
+        setPaymentPlan(installments);
         setLoading(false);
       } catch (error) {
-        console.error("Ödeme planı getirme hatası:", error);
-        setError("Ödeme planı getirme hatası oluştu.");
+        console.error("Borç getirme hatası:", error);
+        setError("Borç getirme hatası oluştu.");
         setLoading(false);
       }
     };
 
     if (id) {
-      fetchPaymentPlan();
+      fetchDebt();
     }
   }, [id]);
+
+  const createInstallments = (debt) => {
+    const installments = [];
+    const installmentAmount = debt.debtAmount / debt.installment;
+    for (let i = 0; i < debt.installment; i++) {
+      const paymentDate = new Date(debt.paymentStart);
+      paymentDate.setMonth(paymentDate.getMonth() + i);
+
+      installments.push({
+        id: `${debt.id}-${i + 1}`,
+        paymentDate: paymentDate.toISOString().split('T')[0],
+        paymentAmount: installmentAmount,
+        isPaid: false,
+      });
+    }
+
+    // Mevcut ödeme planını borç verisinden alınan ödenmiş taksitlerle güncelle
+    debt.paymentPlan.forEach(paidInstallment => {
+      const index = installments.findIndex(i => i.paymentDate === paidInstallment.paymentDate);
+      if (index !== -1) {
+        installments[index].isPaid = paidInstallment.isPaid;
+        installments[index].paymentAmount = paidInstallment.paymentAmount;
+      }
+    });
+
+    return installments;
+  };
 
   const markAsPaid = async (paymentPlanId) => {
     const token = localStorage.getItem("accessToken");
@@ -75,7 +106,7 @@ const PaymentPlanDetailPage = () => {
   const handlePaymentAmountChange = (e) => {
     const { value } = e.target;
     // Ödeme miktarını sadece sayı olarak kabul et ve borç miktarından fazla olmamasını sağla
-    if (!isNaN(value) && parseFloat(value) <= paymentPlan[0]?.paymentAmount) {
+    if (!isNaN(value) && parseFloat(value) <= debt?.debtAmount) {
       setPaymentAmount(value);
     }
   };
@@ -93,40 +124,49 @@ const PaymentPlanDetailPage = () => {
       <h1 className='text-2xl font-bold mb-4'>
         Ödeme Planı Detayları - Borç ID: {id}
       </h1>
-      <ul>
-        {paymentPlan.map((payment) => (
-          <li key={payment.id} className='mb-2'>
-            <div className='p-4 border rounded'>
-              <p>
-                Ödeme Tarihi:{" "}
-                {new Date(payment.paymentDate).toLocaleDateString()}
-              </p>
-              <p>Ödeme Miktarı: {payment.paymentAmount} TL</p>
-              <p>Ödeme Durumu: {payment.isPaid ? "Ödendi" : "Ödenmedi"}</p>
-              {!payment.isPaid && (
-                <div>
-                  <input
-                    type='number'
-                    value={paymentAmount}
-                    onChange={handlePaymentAmountChange}
-                    placeholder={`Max ${payment.paymentAmount} TL`}
-                    className='border rounded p-2 mb-2'
-                  />
-                  <button
-                    onClick={() => markAsPaid(payment.id)}
-                    disabled={!paymentAmount}
-                    className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ${
-                      !paymentAmount ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
-                  >
-                    Ödendi Olarak İşaretle
-                  </button>
-                </div>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
+      <table className='min-w-full bg-white border'>
+        <thead>
+          <tr>
+            <th className='px-4 py-2'>Taksit Numarası</th>
+            <th className='px-4 py-2'>Ödeme Tarihi</th>
+            <th className='px-4 py-2'>Ödeme Miktarı</th>
+            <th className='px-4 py-2'>Ödeme Durumu</th>
+            <th className='px-4 py-2'>İşlem</th>
+          </tr>
+        </thead>
+        <tbody>
+          {paymentPlan.map((payment, index) => (
+            <tr key={payment.id} className={`${index % 2 === 0 ? "bg-gray-100" : ""}`}>
+              <td className='border px-4 py-2'>{index + 1}</td>
+              <td className='border px-4 py-2'>{new Date(payment.paymentDate).toLocaleDateString()}</td>
+              <td className='border px-4 py-2'>{payment.paymentAmount} TL</td>
+              <td className='border px-4 py-2'>{payment.isPaid ? "Ödendi" : "Ödenmedi"}</td>
+              <td className='border px-4 py-2'>
+                {!payment.isPaid && (
+                  <div>
+                    <input
+                      type='number'
+                      value={paymentAmount}
+                      onChange={handlePaymentAmountChange}
+                      placeholder={`Max ${payment.paymentAmount} TL`}
+                      className='border rounded p-2 mb-2'
+                    />
+                    <button
+                      onClick={() => markAsPaid(payment.id)}
+                      disabled={!paymentAmount}
+                      className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ${
+                        !paymentAmount ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                    >
+                      Ödendi Olarak İşaretle
+                    </button>
+                  </div>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

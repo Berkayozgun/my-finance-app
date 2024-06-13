@@ -89,6 +89,36 @@ const DashboardPage = () => {
     return debts.filter((debt) => new Date(debt.paymentStart) >= today);
   };
 
+  const handleNewDebtSubmit = async (formData) => {
+    const token = localStorage.getItem("accessToken");
+
+    try {
+      const response = await axios.post(
+        "https://study.logiper.com/finance/debt",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = response.data;
+
+      if (data.status === "success") {
+        // Yeni borcu debts state'ine ekleyin
+        setDebts([...debts, data.data]);
+        // Form başarıyla gönderildiğinde başka bir sayfaya yönlendirin veya popup'ı kapatın
+        // Örneğin: router.push('/dashboard') veya setPopupOpen(false);
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      console.error("New debt creation error:", error);
+      setError("Yeni borç oluşturulurken bir hata oluştu.");
+    }
+  };
+
   if (isLoading) {
     return <div>Yükleniyor...</div>;
   }
